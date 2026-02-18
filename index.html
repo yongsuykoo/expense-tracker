@@ -1,89 +1,199 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Expense Tracker</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker | Yongskie</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .modal { transition: opacity 0.3s ease; }
+        .modal.hidden { opacity: 0; pointer-events: none; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
-<div class="max-w-4xl mx-auto p-6">
-  <h1 class="text-3xl font-bold text-center text-blue-700 mb-6">💰 Expense Tracker</h1>
+    <!-- Header -->
+    <header class="gradient-bg text-white py-6 px-4 shadow-lg">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold"><i class="fas fa-wallet mr-2"></i>Expense Tracker</h1>
+                <p class="text-purple-200 text-sm mt-1">Track your spending smartly</p>
+            </div>
+            <button onclick="exportToCSV()" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition flex items-center gap-2">
+                <i class="fas fa-download"></i>
+                <span class="hidden sm:inline">Export CSV</span>
+            </button>
+        </div>
+    </header>
 
-  <!-- Add Expense Form -->
-  <div class="bg-white rounded-xl shadow p-6 mb-6">
-    <h2 class="text-xl font-semibold mb-4">Add Expense</h2>
-    <div class="grid grid-cols-2 gap-4">
-      <input id="desc" type="text" placeholder="Description" class="border rounded-lg p-2 col-span-2"/>
-      <input id="amount" type="number" placeholder="Amount ($)" class="border rounded-lg p-2" min="0" step="0.01"/>
-      <select id="category" class="border rounded-lg p-2">
-        <option value="Food">🍔 Food</option>
-        <option value="Transport">🚗 Transport</option>
-        <option value="Shopping">🛍️ Shopping</option>
-        <option value="Bills">💡 Bills</option>
-        <option value="Health">🏥 Health</option>
-        <option value="Entertainment">🎬 Entertainment</option>
-        <option value="Other">📦 Other</option>
-      </select>
-      <input id="date" type="date" class="border rounded-lg p-2"/>
-      <input id="notes" type="text" placeholder="Notes (optional)" class="border rounded-lg p-2"/>
-      <button onclick="addExpense()" class="col-span-2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 font-semibold">
-        ➕ Add Expense
-      </button>
-    </div>
-  </div>
+    <main class="max-w-6xl mx-auto px-4 py-6">
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-xl p-4 shadow card-hover transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs md:text-sm">This Month</p>
+                        <p id="monthTotal" class="text-xl md:text-2xl font-bold text-purple-600">₱0</p>
+                    </div>
+                    <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-calendar text-purple-600"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow card-hover transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs md:text-sm">Today</p>
+                        <p id="todayTotal" class="text-xl md:text-2xl font-bold text-blue-600">₱0</p>
+                    </div>
+                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-clock text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow card-hover transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs md:text-sm">Total Entries</p>
+                        <p id="totalEntries" class="text-xl md:text-2xl font-bold text-green-600">0</p>
+                    </div>
+                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-list text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow card-hover transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs md:text-sm">Avg/Day</p>
+                        <p id="avgDaily" class="text-xl md:text-2xl font-bold text-orange-600">₱0</p>
+                    </div>
+                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-chart-line text-orange-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-  <!-- Summary Dashboard -->
-  <div class="grid grid-cols-3 gap-4 mb-6">
-    <div class="bg-white rounded-xl shadow p-4 text-center">
-      <div class="text-gray-500 text-sm">This Month</div>
-      <div class="text-2xl font-bold text-red-500" id="monthTotal">$0.00</div>
-    </div>
-    <div class="bg-white rounded-xl shadow p-4 text-center">
-      <div class="text-gray-500 text-sm">Total Expenses</div>
-      <div class="text-2xl font-bold text-blue-600" id="totalAll">$0.00</div>
-    </div>
-    <div class="bg-white rounded-xl shadow p-4 text-center">
-      <div class="text-gray-500 text-sm">Count</div>
-      <div class="text-2xl font-bold text-green-600" id="expenseCount">0</div>
-    </div>
-  </div>
+        <!-- Charts Section -->
+        <div class="grid md:grid-cols-2 gap-6 mb-6">
+            <div class="bg-white rounded-xl p-4 md:p-6 shadow">
+                <h3 class="font-semibold text-gray-700 mb-4"><i class="fas fa-chart-pie mr-2 text-purple-500"></i>Spending by Category</h3>
+                <canvas id="categoryChart" height="200"></canvas>
+            </div>
+            <div class="bg-white rounded-xl p-4 md:p-6 shadow">
+                <h3 class="font-semibold text-gray-700 mb-4"><i class="fas fa-chart-bar mr-2 text-blue-500"></i>Daily Spending (Last 7 Days)</h3>
+                <canvas id="dailyChart" height="200"></canvas>
+            </div>
+        </div>
 
-  <!-- Chart + Filters -->
-  <div class="grid grid-cols-2 gap-6 mb-6">
-    <div class="bg-white rounded-xl shadow p-4">
-      <h2 class="text-lg font-semibold mb-2">By Category</h2>
-      <canvas id="pieChart"></canvas>
-    </div>
-    <div class="bg-white rounded-xl shadow p-4">
-      <h2 class="text-lg font-semibold mb-2">Filters</h2>
-      <select id="filterCat" onchange="renderAll()" class="border rounded-lg p-2 w-full mb-2">
-        <option value="">All Categories</option>
-        <option value="Food">🍔 Food</option>
-        <option value="Transport">🚗 Transport</option>
-        <option value="Shopping">🛍️ Shopping</option>
-        <option value="Bills">💡 Bills</option>
-        <option value="Health">🏥 Health</option>
-        <option value="Entertainment">🎬 Entertainment</option>
-        <option value="Other">📦 Other</option>
-      </select>
-      <input id="filterFrom" type="date" onchange="renderAll()" class="border rounded-lg p-2 w-full mb-2" placeholder="From"/>
-      <input id="filterTo" type="date" onchange="renderAll()" class="border rounded-lg p-2 w-full mb-2" placeholder="To"/>
-      <button onclick="exportCSV()" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 font-semibold mt-2">
-        📥 Export CSV
-      </button>
-    </div>
-  </div>
+        <!-- Filters & Add Button -->
+        <div class="bg-white rounded-xl p-4 shadow mb-6">
+            <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    <select id="filterCategory" onchange="renderExpenses()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+                        <option value="">All Categories</option>
+                        <option value="Food">🍔 Food</option>
+                        <option value="Transport">🚗 Transport</option>
+                        <option value="Shopping">🛒 Shopping</option>
+                        <option value="Bills">📄 Bills</option>
+                        <option value="Entertainment">🎮 Entertainment</option>
+                        <option value="Health">💊 Health</option>
+                        <option value="Other">📦 Other</option>
+                    </select>
+                    <input type="date" id="filterDateFrom" onchange="renderExpenses()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+                    <input type="date" id="filterDateTo" onchange="renderExpenses()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+                    <button onclick="clearFilters()" class="px-4 py-2 text-gray-600 hover:text-gray-800 transition">
+                        <i class="fas fa-times"></i> Clear
+                    </button>
+                </div>
+                <button onclick="openModal()" class="w-full md:w-auto gradient-bg text-white px-6 py-3 rounded-lg hover:opacity-90 transition flex items-center justify-center gap-2 font-semibold">
+                    <i class="fas fa-plus"></i> Add Expense
+                </button>
+            </div>
+        </div>
 
-  <!-- Expense List -->
-  <div class="bg-white rounded-xl shadow p-6">
-    <h2 class="text-xl font-semibold mb-4">Expenses</h2>
-    <div id="expenseList" class="space-y-2"></div>
-    <p id="noExpenses" class="text-gray-400 text-center py-4">No expenses yet. Add one above!</p>
-  </div>
-</div>
+        <!-- Expenses List -->
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+            <div class="p-4 border-b bg-gray-50">
+                <h3 class="font-semibold text-gray-700"><i class="fas fa-receipt mr-2 text-purple-500"></i>Recent Expenses</h3>
+            </div>
+            <div id="expensesList" class="divide-y max-h-96 overflow-y-auto">
+                <!-- Expenses will be rendered here -->
+            </div>
+            <div id="emptyState" class="p-8 text-center text-gray-500 hidden">
+                <i class="fas fa-receipt text-4xl mb-3 text-gray-300"></i>
+                <p>No expenses yet. Start tracking your spending!</p>
+            </div>
+        </div>
+    </main>
 
-<script src="app.js"></script>
+    <!-- Modal -->
+    <div id="modal" class="modal hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl transform transition">
+            <div class="p-6 border-b">
+                <div class="flex justify-between items-center">
+                    <h3 id="modalTitle" class="text-xl font-bold text-gray-800">Add Expense</h3>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 transition">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <form id="expenseForm" onsubmit="saveExpense(event)" class="p-6 space-y-4">
+                <input type="hidden" id="expenseId">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Amount (₱)</label>
+                    <input type="number" id="amount" step="0.01" min="0" required placeholder="0.00" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                    <select id="category" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+                        <option value="Food">🍔 Food</option>
+                        <option value="Transport">🚗 Transport</option>
+                        <option value="Shopping">🛒 Shopping</option>
+                        <option value="Bills">📄 Bills</option>
+                        <option value="Entertainment">🎮 Entertainment</option>
+                        <option value="Health">💊 Health</option>
+                        <option value="Other">📦 Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                    <input type="date" id="date" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+                    <textarea id="notes" rows="2" placeholder="What was this expense for?" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none resize-none"></textarea>
+                </div>
+                <button type="submit" class="w-full gradient-bg text-white py-3 rounded-lg hover:opacity-90 transition font-semibold">
+                    <i class="fas fa-save mr-2"></i>Save Expense
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-trash text-2xl text-red-500"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Delete Expense?</h3>
+            <p class="text-gray-500 mb-6">This action cannot be undone.</p>
+            <div class="flex gap-3">
+                <button onclick="closeDeleteModal()" class="flex-1 py-3 border rounded-lg hover:bg-gray-50 transition font-medium">Cancel</button>
+                <button onclick="confirmDelete()" class="flex-1 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-medium">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center py-6 text-gray-500 text-sm">
+        <p>Built with ❤️ by Yongskie | <span id="currentYear"></span></p>
+    </footer>
+
+    <script src="app.js"></script>
 </body>
 </html>
